@@ -126,6 +126,16 @@
   .panel-head h1 { font-family:'Playfair Display',serif; font-weight:700; font-size:25px; line-height:1.1; }
   .close-x { background:none; border:none; color:var(--ink-soft); font-size:24px; cursor:pointer; line-height:1; padding:2px; }
 
+  .search-wrap {
+    margin:14px 16px 12px; padding:9px 12px; display:flex; align-items:center; gap:8px;
+    background:var(--panel-2); border:1px solid var(--line); border-radius:11px;
+  }
+  .search-wrap i { color:var(--ink-soft); font-size:15px; flex-shrink:0; }
+  .search-wrap input {
+    border:none; background:none; outline:none; flex:1; min-width:0;
+    font-family:'Inter',sans-serif; font-size:13.5px; color:var(--ink);
+  }
+  .search-wrap input::placeholder { color:var(--ink-soft); }
   .filters { padding:12px 16px; border-bottom:1px solid var(--line); display:flex; flex-wrap:wrap; gap:7px; }
   .chip {
     border:1px solid var(--line); background:transparent; color:var(--ink-soft);
@@ -240,6 +250,10 @@
     </div>
     <button class="close-x" id="closeBtn" aria-label="Close">&times;</button>
   </div>
+  <div class="search-wrap">
+    <i class="icon-search"></i>
+    <input type="text" id="searchInput" placeholder="Search places…" autocomplete="off">
+  </div>
   <div class="filters" id="filters"></div>
   <div class="list" id="list"></div>
 </aside>
@@ -254,6 +268,17 @@ mapboxgl.accessToken = MAPBOX_TOKEN;
 let DATA = null, map = null, markers = [], activeCats = new Set(), userMarker = null;
 let zonesMode = false, zonePopup = null;
 let layersPanelOpen = false;
+let searchQuery = '';
+
+function matchesSearch(loc){
+  if(!searchQuery) return true;
+  const hay=(loc.name+' '+(loc.tags||[]).join(' ')+' '+(loc.note||'')).toLowerCase();
+  return hay.includes(searchQuery);
+}
+
+function applyVisibility(){
+  markers.forEach(m=>{ m.el.style.display=(activeCats.has(m.cat)&&matchesSearch(m.loc))?'':'none'; });
+}
 
 const ICONS = {
   home:'icon-home', landmark:'icon-landmark',
@@ -267,6 +292,7 @@ async function boot(){
   initMap();
   buildFilters();
   buildList();
+  document.getElementById('searchInput').addEventListener('input',onSearchInput);
 }
 
 function initMap(){
@@ -333,7 +359,7 @@ function addMarkers(){
       .setLngLat([loc.lng,loc.lat])
       .setPopup(makePopup(loc,cat))
       .addTo(map);
-    markers.push({marker,cat:loc.cat,el:outer});
+    markers.push({marker,cat:loc.cat,el:outer,loc});
   });
 }
 
@@ -381,7 +407,13 @@ function toggleCat(key,btn,c){
     btn.style.background=c.color; btn.style.borderColor='transparent';
     btn.querySelector('.dot').style.background='#fff';
   }
-  markers.forEach(m=>{ m.el.style.display=activeCats.has(m.cat)?'':'none'; });
+  applyVisibility();
+  buildList();
+}
+
+function onSearchInput(e){
+  searchQuery=e.target.value.trim().toLowerCase();
+  applyVisibility();
   buildList();
 }
 
@@ -389,7 +421,7 @@ function buildList(){
   const list=document.getElementById('list'); list.innerHTML='';
   Object.entries(DATA.categories).forEach(([key,c])=>{
     if(!activeCats.has(key)) return;
-    const items=DATA.locations.filter(l=>l.cat===key);
+    const items=DATA.locations.filter(l=>l.cat===key && matchesSearch(l));
     if(!items.length) return;
     const h=document.createElement('div'); h.className='group-h';
     h.innerHTML=`<span class="gi" style="background:${c.color}"><i class="${ICONS[c.icon]}"></i></span>${c.label}`;
