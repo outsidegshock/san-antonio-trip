@@ -166,6 +166,7 @@
   /* ---------- Popup ---------- */
   .mapboxgl-popup { max-width:300px !important; }
   .mapboxgl-popup-content {
+    position:relative;
     background:var(--panel); color:var(--ink);
     border-radius:16px; padding:0; overflow:hidden;
     box-shadow:0 10px 40px rgba(0,0,0,.32);
@@ -173,8 +174,8 @@
   }
   .mapboxgl-popup-close-button { font-size:22px; color:var(--ink-soft); padding:4px 9px; }
   .mapboxgl-popup-tip { display:none; }
-  .pop-band { height:6px; }
-  .pop-body { padding:14px 16px 16px; }
+  .pop-band { position:absolute; left:0; top:0; bottom:0; width:5px; }
+  .pop-body { padding:14px 16px 16px 21px; }
   .pop-cat { font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); display:flex; align-items:center; gap:6px; }
   .pop-cat .ci { width:16px; height:16px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; color:#fff; }
   .pop-name { font-family:'Playfair Display',serif; font-weight:600; font-size:19px; line-height:1.15; margin:7px 0 3px; display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
@@ -286,6 +287,22 @@ const ICONS = {
   train:'icon-train-front'
 };
 
+document.addEventListener('click',e=>{
+  const btn=e.target.closest('.tiktok-btn');
+  if(!btn) return;
+  e.preventDefault();
+  const q=encodeURIComponent(btn.dataset.q);
+  const fallback=btn.href;
+  let hidden=false;
+  const onHide=()=>{ hidden=true; };
+  document.addEventListener('visibilitychange',onHide,{once:true});
+  window.location.href=`snssdk1233://search/result?keyword=${q}`;
+  setTimeout(()=>{
+    document.removeEventListener('visibilitychange',onHide);
+    if(!hidden) window.open(fallback,'_blank');
+  },1200);
+});
+
 async function boot(){
   DATA = await (await fetch('locations.json')).json();
   Object.keys(DATA.categories).forEach(c=>activeCats.add(c));
@@ -359,6 +376,7 @@ function addMarkers(){
       .setLngLat([loc.lng,loc.lat])
       .setPopup(makePopup(loc,cat))
       .addTo(map);
+    inner.addEventListener('click',()=>{ map.easeTo({center:[loc.lng,loc.lat],zoom:Math.min(map.getZoom(),14),duration:500}); });
     markers.push({marker,cat:loc.cat,el:outer,loc});
   });
 }
@@ -381,7 +399,7 @@ function makePopup(loc,cat){
         <a class="primary" href="${apple}" target="_blank" rel="noopener"><i class="icon-apple" style="font-size:13px"></i>Apple Maps</a>
         <a href="${google}" target="_blank" rel="noopener"><i class="icon-navigation" style="font-size:13px"></i>Google Maps</a>
         <a class="full" href="${webSearch}" target="_blank" rel="noopener"><i class="icon-search" style="font-size:13px"></i>Search the Web</a>
-        <a class="full" href="${tiktok}" target="_blank" rel="noopener"><i class="icon-video" style="font-size:13px"></i>TikTok</a>
+        <a class="full tiktok-btn" href="${tiktok}" data-q="${loc.name} san antonio" target="_blank" rel="noopener"><i class="icon-video" style="font-size:13px"></i>TikTok</a>
       </div>
     </div>`;
   return new mapboxgl.Popup({offset:26,closeButton:true,maxWidth:'300px'}).setHTML(html);
