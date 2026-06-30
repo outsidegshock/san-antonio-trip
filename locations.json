@@ -5,9 +5,9 @@
   },
   "categories": {
     "homebase":   { "label": "Hotel",        "color": "#E8956D", "icon": "home" },
-    "attractions":{ "label": "Attractions",  "color": "#5B8DB8", "icon": "landmark" },
+    "attractions":{ "label": "Things to Do", "color": "#5B8DB8", "icon": "landmark" },
     "food":       { "label": "Food & Drink", "color": "#7BA67B", "icon": "utensils" },
-    "nightlife":  { "label": "Nightlife",    "color": "#8B7BAB", "icon": "music" }
+    "nightlife":  { "label": "Bars",         "color": "#8B7BAB", "icon": "music" }
   },
   "locations": [
     { "name": "Hyatt Regency San Antonio Riverwalk", "cat": "homebase", "lat": 29.4255945, "lng": -98.4882006, "star": false, "note": "Home base for the weekend. Directly on the Riverwalk, steps from everything downtown.", "tags": ["hotel", "homebase", "riverwalk"], "address": "123 Losoya St" },
