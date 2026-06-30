@@ -13,6 +13,9 @@
     { "name": "Hyatt Regency San Antonio Riverwalk", "cat": "homebase", "lat": 29.4255945, "lng": -98.4882006, "star": false, "note": "Home base for the weekend. Directly on the Riverwalk, steps from everything downtown.", "address": "123 Losoya St" },
 
     { "name": "Alamodome", "cat": "attractions", "lat": 29.4169834, "lng": -98.4788143, "star": true, "note": "Main event — Ye concert, Saturday July 4 at 9 PM. Tickets in hand. Major sports and concert venue about a mile southeast of the Riverwalk.", "address": "100 Montana St" },
+    { "name": "Frost Bank Center", "cat": "attractions", "lat": 29.4270201, "lng": -98.4374652, "star": false, "note": "Home of the San Antonio Spurs (NBA). Also hosts major concerts and the annual San Antonio Stock Show & Rodeo. East of downtown, about 2 miles from the hotel.", "address": "1 Frost Bank Center Dr" },
+    { "name": "Toyota Field", "cat": "attractions", "lat": 29.5393991, "lng": -98.3945676, "star": false, "note": "Home of San Antonio FC (USL Championship soccer). Smaller stadium on the north side, about 10 miles from downtown.", "address": "5106 David Edwards Dr" },
+    { "name": "Nelson W. Wolff Municipal Stadium", "cat": "attractions", "lat": 29.409021, "lng": -98.601061, "star": false, "note": "Home of the San Antonio Missions (MiLB, Padres affiliate). Retro ballpark feel on the west side, about 7 miles from downtown.", "address": "5757 US-90" },
 
     { "name": "The Alamo", "cat": "attractions", "lat": 29.4259671, "lng": -98.4861419, "star": false, "note": "The most iconic landmark in Texas — site of the 1836 battle. Free to enter, right on Alamo Plaza a short walk from the hotel. Worth a look even if history isn't your thing.", "address": "300 Alamo Plaza" },
     { "name": "San Antonio Museum of Art", "cat": "attractions", "lat": 29.4372761, "lng": -98.4821898, "star": false, "note": "Riverside art museum with a collection spanning 5,000 years. Sits on the Museum Reach section of the River Walk — reachable by water taxi. Free the first Sunday of every month.", "address": "200 W Jones Ave" },
@@ -26,6 +29,8 @@
     { "name": "St. Mary's Strip", "cat": "zones", "lat": 29.4400, "lng": -98.5030, "star": false, "radius": 0.40, "note": "The city's main bar / live-music strip.", "address": "St. Mary's St, San Antonio" },
     { "name": "The Pearl", "cat": "zones", "lat": 29.4422, "lng": -98.4794, "star": false, "radius": 0.40, "note": "Upscale food hall, brewery, trendy bars.", "address": "Pearl Pkwy, San Antonio" },
     { "name": "Southtown / Blue Star", "cat": "zones", "lat": 29.4147, "lng": -98.4888, "star": false, "radius": 0.50, "note": "Arts district, craft cocktails, breweries.", "address": "Southtown, San Antonio" },
-    { "name": "Historic Market Square", "cat": "zones", "lat": 29.4254, "lng": -98.4999, "star": false, "radius": 0.30, "note": "El Mercado, Tex-Mex, shopping.", "address": "514 W Commerce St" }
+    { "name": "Historic Market Square", "cat": "zones", "lat": 29.4254, "lng": -98.4999, "star": false, "radius": 0.30, "note": "El Mercado, Tex-Mex, shopping.", "address": "514 W Commerce St" },
+    { "name": "Broadway / Alamo Heights", "cat": "zones", "lat": 29.4730, "lng": -98.4625, "star": false, "radius": 0.55, "note": "Broadway corridor: bars, restaurants, museums, the zoo.", "address": "Broadway, San Antonio" },
+    { "name": "Thousand Oaks / North Side", "cat": "zones", "lat": 29.5650, "lng": -98.4480, "star": false, "radius": 0.70, "note": "North-side neighborhood bars & grills.", "address": "Thousand Oaks Dr, San Antonio" }
   ]
 }
