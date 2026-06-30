@@ -163,17 +163,30 @@
   .item .ad { font-size:11.5px; color:var(--ink-soft); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .star { color:#d8a93c; font-size:12px; }
 
-  /* ---------- Popup ---------- */
-  .mapboxgl-popup { max-width:300px !important; }
-  .mapboxgl-popup-content {
-    position:relative;
-    background:var(--panel); color:var(--ink);
-    border-radius:16px; padding:0; overflow:hidden;
-    box-shadow:0 10px 40px rgba(0,0,0,.32);
-    font-family:'Inter',sans-serif;
+  /* ---------- POI modal (fixed to viewport center, never tracks map movement) ---------- */
+  .poi-backdrop {
+    position:fixed; inset:0; background:rgba(20,15,8,.4); z-index:20;
+    opacity:0; pointer-events:none; transition:opacity .18s ease;
   }
-  .mapboxgl-popup-close-button { font-size:22px; color:var(--ink-soft); padding:4px 9px; }
-  .mapboxgl-popup-tip { display:none; }
+  .poi-backdrop.open { opacity:1; pointer-events:auto; }
+  .poi-modal {
+    position:fixed; left:50%; top:50%; transform:translate(-50%,-50%) scale(.96);
+    width:320px; max-width:88vw; max-height:78vh;
+    background:var(--panel); color:var(--ink);
+    border-radius:18px; box-shadow:0 20px 60px rgba(0,0,0,.4);
+    font-family:'Inter',sans-serif;
+    z-index:21; opacity:0; pointer-events:none;
+    transition:opacity .18s ease, transform .18s ease;
+  }
+  .poi-modal.open { opacity:1; pointer-events:auto; transform:translate(-50%,-50%) scale(1); }
+  .poi-modal-close {
+    position:absolute; top:8px; right:8px; z-index:2;
+    width:30px; height:30px; border-radius:50%; border:none;
+    background:var(--panel); color:var(--ink-soft); font-size:20px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 2px 8px rgba(0,0,0,.22);
+  }
+  .poi-modal-scroll { position:relative; overflow-y:auto; max-height:78vh; border-radius:18px; }
   .pop-band { position:absolute; left:0; top:0; bottom:0; width:5px; }
   .pop-body { padding:14px 16px 16px 21px; }
   .pop-cat { font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); display:flex; align-items:center; gap:6px; }
@@ -259,6 +272,12 @@
   <div class="list" id="list"></div>
 </aside>
 
+<div class="poi-backdrop" id="poiBackdrop"></div>
+<div class="poi-modal" id="poiModal">
+  <button class="poi-modal-close" id="poiModalClose" aria-label="Close">&times;</button>
+  <div class="poi-modal-scroll" id="poiModalContent"></div>
+</div>
+
 <div class="legend-note" id="legendNote">Tap a pin for details, hours &amp; directions</div>
 
 <script>
@@ -267,7 +286,7 @@ mapboxgl.accessToken = MAPBOX_TOKEN;
 
 
 let DATA = null, map = null, markers = [], activeCats = new Set(), userMarker = null;
-let zonesMode = false, zonePopup = null;
+let zonesMode = false;
 let layersPanelOpen = false;
 let searchQuery = '';
 
@@ -287,22 +306,6 @@ const ICONS = {
   train:'icon-train-front'
 };
 
-document.addEventListener('click',e=>{
-  const btn=e.target.closest('.tiktok-btn');
-  if(!btn) return;
-  e.preventDefault();
-  const q=encodeURIComponent(btn.dataset.q);
-  const fallback=btn.href;
-  let hidden=false;
-  const onHide=()=>{ hidden=true; };
-  document.addEventListener('visibilitychange',onHide,{once:true});
-  window.location.href=`snssdk1233://search/result?keyword=${q}`;
-  setTimeout(()=>{
-    document.removeEventListener('visibilitychange',onHide);
-    if(!hidden) window.open(fallback,'_blank');
-  },1200);
-});
-
 async function boot(){
   DATA = await (await fetch('locations.json')).json();
   Object.keys(DATA.categories).forEach(c=>activeCats.add(c));
@@ -310,6 +313,9 @@ async function boot(){
   buildFilters();
   buildList();
   document.getElementById('searchInput').addEventListener('input',onSearchInput);
+  document.getElementById('poiModalClose').addEventListener('click',closePoiModal);
+  document.getElementById('poiBackdrop').addEventListener('click',closePoiModal);
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') closePoiModal(); });
 }
 
 function initMap(){
@@ -374,21 +380,23 @@ function addMarkers(){
     outer.appendChild(inner);
     const marker=new mapboxgl.Marker({element:outer,anchor:'bottom',offset:[0,loc.cat==='homebase'?-12:-10]})
       .setLngLat([loc.lng,loc.lat])
-      .setPopup(makePopup(loc,cat))
       .addTo(map);
-    inner.addEventListener('click',()=>{ map.easeTo({center:[loc.lng,loc.lat],zoom:Math.min(map.getZoom(),14),duration:500}); });
+    inner.addEventListener('click',()=>{
+      map.easeTo({center:[loc.lng,loc.lat],zoom:14,duration:500});
+      openPoiModal(poiCardHtml(loc,cat));
+    });
     markers.push({marker,cat:loc.cat,el:outer,loc});
   });
 }
 
-function makePopup(loc,cat){
+function poiCardHtml(loc,cat){
   const q=encodeURIComponent(loc.name+' '+(loc.address||''));
   const apple=`https://maps.apple.com/?q=${q}&ll=${loc.lat},${loc.lng}`;
   const google=`https://www.google.com/maps/search/?api=1&query=${loc.lat},${loc.lng}`;
   const webSearch=`https://www.google.com/search?q=${encodeURIComponent(loc.name+' san antonio texas')}`;
   const tiktok=`https://www.tiktok.com/search?q=${encodeURIComponent(loc.name+' san antonio')}`;
   const starHtml=loc.star?'<span class="star"><i class="icon-star" style="font-size:13px"></i></span>':'';
-  const html=`
+  return `
     <div class="pop-band" style="background:${cat.color}"></div>
     <div class="pop-body">
       <div class="pop-cat"><span class="ci" style="background:${cat.color}"><i class="${ICONS[cat.icon]}"></i></span>${cat.label}</div>
@@ -399,10 +407,20 @@ function makePopup(loc,cat){
         <a class="primary" href="${apple}" target="_blank" rel="noopener"><i class="icon-apple" style="font-size:13px"></i>Apple Maps</a>
         <a href="${google}" target="_blank" rel="noopener"><i class="icon-navigation" style="font-size:13px"></i>Google Maps</a>
         <a class="full" href="${webSearch}" target="_blank" rel="noopener"><i class="icon-search" style="font-size:13px"></i>Search the Web</a>
-        <a class="full tiktok-btn" href="${tiktok}" data-q="${loc.name} san antonio" target="_blank" rel="noopener"><i class="icon-video" style="font-size:13px"></i>TikTok</a>
+        <a class="full" href="${tiktok}" target="_blank" rel="noopener"><i class="icon-video" style="font-size:13px"></i>TikTok<span style="opacity:.6;font-weight:400;margin-left:3px;">(Browser only)</span></a>
       </div>
     </div>`;
-  return new mapboxgl.Popup({offset:26,closeButton:true,maxWidth:'300px'}).setHTML(html);
+}
+
+function openPoiModal(html){
+  document.getElementById('poiModalContent').innerHTML=html;
+  document.getElementById('poiModal').classList.add('open');
+  document.getElementById('poiBackdrop').classList.add('open');
+}
+
+function closePoiModal(){
+  document.getElementById('poiModal').classList.remove('open');
+  document.getElementById('poiBackdrop').classList.remove('open');
 }
 
 function buildFilters(){
@@ -455,9 +473,8 @@ function buildList(){
         </div>`;
       it.addEventListener('click',()=>{
         closePanel();
-        map.flyTo({center:[loc.lng,loc.lat],zoom:14.5,speed:.9});
-        const m=markers.find(mm=>mm.marker.getLngLat().lng===loc.lng && mm.marker.getLngLat().lat===loc.lat);
-        setTimeout(()=>{ if(m) m.marker.togglePopup(); },650);
+        map.easeTo({center:[loc.lng,loc.lat],zoom:14,duration:500});
+        openPoiModal(poiCardHtml(loc,c));
       });
       list.appendChild(it);
     });
@@ -519,14 +536,11 @@ function removeZoneLayers(){
 }
 
 function onZoneClick(e){
-  if(zonePopup) zonePopup.remove();
   const {name,note,address,lat,lng}=e.features[0].properties;
   const q=encodeURIComponent(name+' '+(address||''));
   const apple=`https://maps.apple.com/?q=${q}&ll=${lat},${lng}`;
   const google=`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-  zonePopup=new mapboxgl.Popup({closeButton:true,maxWidth:'300px'})
-    .setLngLat(e.lngLat)
-    .setHTML(`
+  openPoiModal(`
       <div class="pop-band" style="background:#7B9E9E"></div>
       <div class="pop-body">
         <div class="pop-cat"><span class="ci" style="background:#7B9E9E"><i class="icon-map"></i></span>Zone</div>
@@ -537,8 +551,7 @@ function onZoneClick(e){
           <a class="primary" href="${apple}" target="_blank" rel="noopener"><i class="icon-apple" style="font-size:13px"></i>Apple Maps</a>
           <a href="${google}" target="_blank" rel="noopener"><i class="icon-navigation" style="font-size:13px"></i>Google Maps</a>
         </div>
-      </div>`)
-    .addTo(map);
+      </div>`);
 }
 
 function toggleZonesMode(){
@@ -547,7 +560,7 @@ function toggleZonesMode(){
   if(zonesMode){
     addZoneLayers();
   } else {
-    if(zonePopup){zonePopup.remove();zonePopup=null;}
+    closePoiModal();
     removeZoneLayers();
   }
 }
