@@ -334,7 +334,6 @@ function addMarkers(){
       .setLngLat([loc.lng,loc.lat])
       .setPopup(makePopup(loc,cat))
       .addTo(map);
-    inner.addEventListener('click',()=>{ map.flyTo({center:[loc.lng,loc.lat],zoom:14.5,speed:.8}); });
     markers.push({marker,cat:loc.cat,el:outer});
   });
 }
