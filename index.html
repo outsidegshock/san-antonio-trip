@@ -191,7 +191,13 @@
   .pop-body { padding:14px 16px 16px 21px; }
   .pop-cat { font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); display:flex; align-items:center; gap:6px; }
   .pop-cat .ci { width:16px; height:16px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; color:#fff; }
-  .pop-name { font-family:'Playfair Display',serif; font-weight:600; font-size:19px; line-height:1.15; margin:7px 0 3px; display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+  .pop-name { font-family:'Playfair Display',serif; font-weight:600; font-size:19px; line-height:1.15; margin:7px 0 3px; display:flex; align-items:center; gap:7px; flex-wrap:wrap; cursor:pointer; position:relative; }
+  .copied-flash {
+    position:absolute; left:0; top:-24px; background:var(--ink); color:var(--panel);
+    font-family:'Inter',sans-serif; font-size:11px; font-weight:600; padding:3px 9px; border-radius:6px;
+    opacity:0; pointer-events:none; transition:opacity .15s ease; white-space:nowrap;
+  }
+  .copied-flash.show { opacity:1; }
   .pop-addr { font-size:12px; color:var(--ink-soft); margin-bottom:9px; }
   .pop-note { font-size:13px; line-height:1.5; margin-bottom:13px; }
   .pop-btns { display:flex; flex-wrap:wrap; gap:8px; }
@@ -306,6 +312,17 @@ const ICONS = {
   train:'icon-train-front'
 };
 
+document.addEventListener('click',e=>{
+  const nameEl=e.target.closest('.pop-name');
+  if(!nameEl) return;
+  navigator.clipboard.writeText(nameEl.dataset.copy).then(()=>{
+    const flash=nameEl.querySelector('.copied-flash');
+    flash.classList.add('show');
+    clearTimeout(flash._t);
+    flash._t=setTimeout(()=>flash.classList.remove('show'),1200);
+  }).catch(()=>{});
+});
+
 async function boot(){
   DATA = await (await fetch('locations.json')).json();
   Object.keys(DATA.categories).forEach(c=>activeCats.add(c));
@@ -400,7 +417,7 @@ function poiCardHtml(loc,cat){
     <div class="pop-band" style="background:${cat.color}"></div>
     <div class="pop-body">
       <div class="pop-cat"><span class="ci" style="background:${cat.color}"><i class="${ICONS[cat.icon]}"></i></span>${cat.label}</div>
-      <div class="pop-name">${loc.name}${starHtml}</div>
+      <div class="pop-name" data-copy="${loc.name} san antonio">${loc.name}${starHtml}<i class="icon-copy" style="font-size:12px;opacity:.5;"></i><span class="copied-flash">Copied!</span></div>
       ${loc.address?`<div class="pop-addr">${loc.address}</div>`:''}
       <div class="pop-note">${loc.note||''}</div>
       <div class="pop-btns">
