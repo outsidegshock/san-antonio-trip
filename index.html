@@ -171,13 +171,14 @@
   .pop-name { font-family:'Playfair Display',serif; font-weight:600; font-size:19px; line-height:1.15; margin:7px 0 3px; display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
   .pop-addr { font-size:12px; color:var(--ink-soft); margin-bottom:9px; }
   .pop-note { font-size:13px; line-height:1.5; margin-bottom:13px; }
-  .pop-btns { display:flex; gap:8px; }
+  .pop-btns { display:flex; flex-wrap:wrap; gap:8px; }
   .pop-btns a {
     flex:1; text-align:center; text-decoration:none; font-size:12.5px; font-weight:600;
     padding:9px 6px; border-radius:10px; display:flex; align-items:center; justify-content:center; gap:5px;
     border:1px solid var(--line); color:var(--ink); transition:background .15s;
   }
   .pop-btns a.primary { background:var(--accent); color:#fff; border-color:transparent; }
+  .pop-btns a.full { flex:1 1 100%; }
   .pop-btns a:active { transform:scale(.97); }
 
   /* ---------- Markers ---------- */
@@ -342,6 +343,7 @@ function makePopup(loc,cat){
   const q=encodeURIComponent(loc.name+' '+(loc.address||''));
   const apple=`https://maps.apple.com/?q=${q}&ll=${loc.lat},${loc.lng}`;
   const google=`https://www.google.com/maps/search/?api=1&query=${loc.lat},${loc.lng}`;
+  const webSearch=`https://www.google.com/search?q=${encodeURIComponent(loc.name+' san antonio texas')}`;
   const starHtml=loc.star?'<span class="star"><i class="icon-star" style="font-size:13px"></i></span>':'';
   const html=`
     <div class="pop-band" style="background:${cat.color}"></div>
@@ -353,6 +355,7 @@ function makePopup(loc,cat){
       <div class="pop-btns">
         <a class="primary" href="${apple}" target="_blank" rel="noopener"><i class="icon-apple" style="font-size:13px"></i>Apple Maps</a>
         <a href="${google}" target="_blank" rel="noopener"><i class="icon-navigation" style="font-size:13px"></i>Google Maps</a>
+        <a class="full" href="${webSearch}" target="_blank" rel="noopener"><i class="icon-search" style="font-size:13px"></i>Search the Web</a>
       </div>
     </div>`;
   return new mapboxgl.Popup({offset:26,closeButton:true,maxWidth:'300px'}).setHTML(html);
