@@ -4,7 +4,7 @@
     "radiusMiles": 2
   },
   "categories": {
-    "homebase":   { "label": "Hotel",        "color": "#E8956D", "icon": "home" },
+    "homebase":   { "label": "Hotel",        "color": "#E8956D", "icon": "hotel" },
     "attractions":{ "label": "Things to Do", "color": "#5B8DB8", "icon": "landmark" },
     "food":       { "label": "Food & Drink", "color": "#7BA67B", "icon": "utensils" },
     "nightlife":  { "label": "Bars",         "color": "#8B7BAB", "icon": "music" }

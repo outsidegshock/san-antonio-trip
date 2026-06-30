@@ -123,7 +123,8 @@
     padding:22px 20px 14px; border-bottom:1px solid var(--line);
     display:flex; align-items:flex-start; justify-content:space-between; gap:10px;
   }
-  .close-x { background:none; border:none; color:var(--ink-soft); font-size:24px; cursor:pointer; line-height:1; padding:2px; margin-left:auto; }
+  .panel-head h1 { font-family:'Playfair Display',serif; font-weight:700; font-size:25px; line-height:1.1; }
+  .close-x { background:none; border:none; color:var(--ink-soft); font-size:24px; cursor:pointer; line-height:1; padding:2px; }
 
   .search-wrap {
     margin:14px 16px 12px; padding:9px 12px; display:flex; align-items:center; gap:8px;
@@ -244,6 +245,9 @@
 
 <aside class="panel" id="panel">
   <div class="panel-head">
+    <div>
+      <h1>San Antonio, TX</h1>
+    </div>
     <button class="close-x" id="closeBtn" aria-label="Close">&times;</button>
   </div>
   <div class="search-wrap">
@@ -277,7 +281,7 @@ function applyVisibility(){
 }
 
 const ICONS = {
-  home:'icon-home', landmark:'icon-landmark',
+  home:'icon-home', hotel:'icon-hotel', landmark:'icon-landmark',
   utensils:'icon-utensils', music:'icon-music', trophy:'icon-trophy',
   train:'icon-train-front'
 };
@@ -364,6 +368,7 @@ function makePopup(loc,cat){
   const apple=`https://maps.apple.com/?q=${q}&ll=${loc.lat},${loc.lng}`;
   const google=`https://www.google.com/maps/search/?api=1&query=${loc.lat},${loc.lng}`;
   const webSearch=`https://www.google.com/search?q=${encodeURIComponent(loc.name+' san antonio texas')}`;
+  const tiktok=`https://www.tiktok.com/search?q=${encodeURIComponent(loc.name+' san antonio')}`;
   const starHtml=loc.star?'<span class="star"><i class="icon-star" style="font-size:13px"></i></span>':'';
   const html=`
     <div class="pop-band" style="background:${cat.color}"></div>
@@ -376,6 +381,7 @@ function makePopup(loc,cat){
         <a class="primary" href="${apple}" target="_blank" rel="noopener"><i class="icon-apple" style="font-size:13px"></i>Apple Maps</a>
         <a href="${google}" target="_blank" rel="noopener"><i class="icon-navigation" style="font-size:13px"></i>Google Maps</a>
         <a class="full" href="${webSearch}" target="_blank" rel="noopener"><i class="icon-search" style="font-size:13px"></i>Search the Web</a>
+        <a class="full" href="${tiktok}" target="_blank" rel="noopener"><i class="icon-video" style="font-size:13px"></i>TikTok</a>
       </div>
     </div>`;
   return new mapboxgl.Popup({offset:26,closeButton:true,maxWidth:'300px'}).setHTML(html);
