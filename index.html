@@ -124,7 +124,6 @@
     display:flex; align-items:flex-start; justify-content:space-between; gap:10px;
   }
   .panel-head h1 { font-family:'Playfair Display',serif; font-weight:700; font-size:25px; line-height:1.1; }
-  .panel-head p { font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); margin-top:5px; }
   .close-x { background:none; border:none; color:var(--ink-soft); font-size:24px; cursor:pointer; line-height:1; padding:2px; }
 
   .filters { padding:12px 16px; border-bottom:1px solid var(--line); display:flex; flex-wrap:wrap; gap:7px; }
@@ -237,8 +236,7 @@
 <aside class="panel" id="panel">
   <div class="panel-head">
     <div>
-      <h1>The Itinerary</h1>
-      <p id="count">Loading places…</p>
+      <h1>Itinerary</h1>
     </div>
     <button class="close-x" id="closeBtn" aria-label="Close">&times;</button>
   </div>
@@ -389,7 +387,6 @@ function toggleCat(key,btn,c){
 
 function buildList(){
   const list=document.getElementById('list'); list.innerHTML='';
-  let total=0;
   Object.entries(DATA.categories).forEach(([key,c])=>{
     if(!activeCats.has(key)) return;
     const items=DATA.locations.filter(l=>l.cat===key);
@@ -398,7 +395,6 @@ function buildList(){
     h.innerHTML=`<span class="gi" style="background:${c.color}"><i class="${ICONS[c.icon]}"></i></span>${c.label}`;
     list.appendChild(h);
     items.forEach(loc=>{
-      total++;
       const it=document.createElement('div'); it.className='item'; it.style.borderLeftColor=c.color;
       it.innerHTML=`<span class="pin" style="background:${c.color}"></span>
         <div class="meta">
@@ -414,7 +410,6 @@ function buildList(){
       list.appendChild(it);
     });
   });
-  document.getElementById('count').textContent=`${total} places · ${DATA.config.radiusMiles}-mile radius`;
 }
 
 /* ---------- Live location ---------- */
