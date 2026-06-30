@@ -1,0 +1,31 @@
+{
+  "config": {
+    "homebase": { "name": "Hyatt Regency San Antonio Riverwalk", "lat": 29.4255945, "lng": -98.4882006 },
+    "radiusMiles": 2
+  },
+  "categories": {
+    "homebase":   { "label": "Hotel",        "color": "#E8956D", "icon": "home" },
+    "attractions":{ "label": "Attractions",  "color": "#5B8DB8", "icon": "landmark" },
+    "food":       { "label": "Food & Drink", "color": "#7BA67B", "icon": "utensils" },
+    "nightlife":  { "label": "Nightlife",    "color": "#8B7BAB", "icon": "music" }
+  },
+  "locations": [
+    { "name": "Hyatt Regency San Antonio Riverwalk", "cat": "homebase", "lat": 29.4255945, "lng": -98.4882006, "star": false, "note": "Home base for the weekend. Directly on the Riverwalk, steps from everything downtown.", "address": "123 Losoya St" },
+
+    { "name": "Alamodome", "cat": "attractions", "lat": 29.4169834, "lng": -98.4788143, "star": true, "note": "Main event — Ye concert, Saturday July 4 at 9 PM. Tickets in hand. Major sports and concert venue about a mile southeast of the Riverwalk.", "address": "100 Montana St" },
+
+    { "name": "The Alamo", "cat": "attractions", "lat": 29.4259671, "lng": -98.4861419, "star": false, "note": "The most iconic landmark in Texas — site of the 1836 battle. Free to enter, right on Alamo Plaza a short walk from the hotel. Worth a look even if history isn't your thing.", "address": "300 Alamo Plaza" },
+    { "name": "San Antonio Museum of Art", "cat": "attractions", "lat": 29.4372761, "lng": -98.4821898, "star": false, "note": "Riverside art museum with a collection spanning 5,000 years. Sits on the Museum Reach section of the River Walk — reachable by water taxi. Free the first Sunday of every month.", "address": "200 W Jones Ave" },
+    { "name": "Hopscotch", "cat": "attractions", "lat": 29.4281505, "lng": -98.4900422, "star": false, "note": "Immersive digital art experience with a full bar inside. Walkable from the hotel and Riverwalk. Good pre-night-out stop.", "address": "711 Navarro St Ste 100" },
+    { "name": "Witte Museum", "cat": "attractions", "lat": 29.461978, "lng": -98.4669496, "star": false, "note": "Natural history and Texas heritage museum in Brackenridge Park. Dinosaurs, nature, and deep Texas history. About 3 miles north of downtown.", "address": "3801 Broadway" },
+    { "name": "San Antonio Zoo", "cat": "attractions", "lat": 29.4635835, "lng": -98.4725926, "star": false, "note": "One of the top-rated zoos in the country, set in Brackenridge Park. About 3 miles north of downtown. Open daily 9am–5pm.", "address": "3903 N St Mary's St" },
+
+    { "name": "River Walk / Downtown", "cat": "zones", "lat": 29.4246, "lng": -98.4861, "star": false, "radius": 0.65, "note": "Central hub: bars, dining, the main artery.", "address": "San Antonio River Walk" },
+    { "name": "Alamo Plaza", "cat": "zones", "lat": 29.4259, "lng": -98.4861, "star": false, "radius": 0.30, "note": "The Alamo + historic tourist cluster.", "address": "Alamo Plaza" },
+    { "name": "Houston St / E. Commerce", "cat": "zones", "lat": 29.4250, "lng": -98.4880, "star": false, "radius": 0.35, "note": "Downtown bar and club stretch.", "address": "Houston St, San Antonio" },
+    { "name": "St. Mary's Strip", "cat": "zones", "lat": 29.4400, "lng": -98.5030, "star": false, "radius": 0.40, "note": "The city's main bar / live-music strip.", "address": "St. Mary's St, San Antonio" },
+    { "name": "The Pearl", "cat": "zones", "lat": 29.4422, "lng": -98.4794, "star": false, "radius": 0.40, "note": "Upscale food hall, brewery, trendy bars.", "address": "Pearl Pkwy, San Antonio" },
+    { "name": "Southtown / Blue Star", "cat": "zones", "lat": 29.4147, "lng": -98.4888, "star": false, "radius": 0.50, "note": "Arts district, craft cocktails, breweries.", "address": "Southtown, San Antonio" },
+    { "name": "Historic Market Square", "cat": "zones", "lat": 29.4254, "lng": -98.4999, "star": false, "radius": 0.30, "note": "El Mercado, Tex-Mex, shopping.", "address": "514 W Commerce St" }
+  ]
+}

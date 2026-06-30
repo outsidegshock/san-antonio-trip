@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>San Antonio Trip — July 2026</title>
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.9.0/mapbox-gl.css" rel="stylesheet" />
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.9.0/mapbox-gl.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/lucide-static@0.460.0/font/lucide.css" rel="stylesheet">
+<style>
+  :root {
+    /* Light — "Lost in the Desert" */
+    --l-bg: #e9d4b8;
+    --l-panel: #f4e4cf;
+    --l-panel-2: #ecd9bf;
+    --l-ink: #3d2b1f;
+    --l-ink-soft: #6b5444;
+    --l-line: #c9a986;
+    --l-accent: #b5582f;
+
+    /* Night — Fallout / dark blue + amber */
+    --n-bg: #0d1b2a;
+    --n-panel: #14283d;
+    --n-panel-2: #1a3047;
+    --n-ink: #f0d9b0;
+    --n-ink-soft: #b89b73;
+    --n-line: #2a4a63;
+    --n-accent: #d98a3d;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { height:100%; overflow:hidden; font-family:'Inter',system-ui,sans-serif; }
+  #map { position:absolute; inset:0; }
+
+  body {
+    --bg:var(--l-bg); --panel:var(--l-panel); --panel-2:var(--l-panel-2);
+    --ink:var(--l-ink); --ink-soft:var(--l-ink-soft); --line:var(--l-line); --accent:var(--l-accent);
+    background:var(--bg); color:var(--ink);
+    transition:background .4s ease, color .4s ease;
+  }
+  body.night {
+    --bg:var(--n-bg); --panel:var(--n-panel); --panel-2:var(--n-panel-2);
+    --ink:var(--n-ink); --ink-soft:var(--n-ink-soft); --line:var(--n-line); --accent:var(--n-accent);
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar {
+    position:absolute; top:0; left:0; right:0; z-index:5;
+    display:flex; align-items:center; gap:12px;
+    padding:14px 16px;
+    background:linear-gradient(to bottom, rgba(0,0,0,.18), transparent);
+    pointer-events:none;
+  }
+  .topbar > * { pointer-events:auto; }
+  .menu-btn, .toggle-btn, .locate-btn {
+    width:44px; height:44px; border:none; border-radius:12px;
+    background:var(--panel); color:var(--ink);
+    box-shadow:0 2px 10px rgba(0,0,0,.18);
+    display:flex; align-items:center; justify-content:center;
+    font-size:20px; cursor:pointer; flex-shrink:0;
+    transition:background .2s, transform .1s;
+  }
+  .menu-btn:active, .toggle-btn:active, .locate-btn:active { transform:scale(.94); }
+  .toggle-btn.on { background:var(--accent); color:#fff; }
+  .title-pill {
+    background:var(--panel); border-radius:12px; padding:8px 16px;
+    box-shadow:0 2px 10px rgba(0,0,0,.18);
+    font-family:'Playfair Display',serif; font-weight:600; font-size:17px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    display:flex; flex-direction:column; line-height:1.15;
+  }
+  .title-pill small { font-family:'Inter'; font-weight:400; font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); }
+  .spacer { flex:1; }
+
+  /* ---------- Layers panel ---------- */
+  .layers-panel {
+    position:absolute; top:72px; right:16px; z-index:6;
+    background:var(--panel); border-radius:14px;
+    box-shadow:0 4px 24px rgba(0,0,0,.28);
+    padding:5px; min-width:165px; display:none;
+  }
+  .layers-panel.open { display:block; }
+  .layer-row {
+    width:100%; display:flex; align-items:center; gap:10px;
+    padding:10px 12px; border:none; background:transparent;
+    color:var(--ink); font-family:'Inter',sans-serif;
+    font-size:13.5px; font-weight:500;
+    border-radius:10px; cursor:pointer; transition:background .12s;
+    text-align:left;
+  }
+  .layer-row:hover { background:var(--panel-2); }
+  .layer-ico { font-size:16px; color:var(--ink-soft); width:18px; flex-shrink:0; }
+  .layer-label { flex:1; }
+  .lr-pip {
+    width:30px; height:17px; border-radius:8.5px;
+    background:var(--line); flex-shrink:0; position:relative;
+    transition:background .2s;
+  }
+  .lr-pip::after {
+    content:''; position:absolute; top:2.5px; left:2.5px;
+    width:12px; height:12px; border-radius:50%;
+    background:white; transition:transform .2s;
+  }
+  .layer-row.on .lr-pip { background:var(--accent); }
+  .layer-row.on .lr-pip::after { transform:translateX(13px); }
+  .lr-sep { height:1px; background:var(--line); margin:2px 8px; }
+
+  /* ---------- Side panel ---------- */
+  .panel {
+    position:absolute; top:0; left:0; bottom:0; z-index:10;
+    width:340px; max-width:86vw;
+    background:var(--panel);
+    box-shadow:6px 0 30px rgba(0,0,0,.25);
+    transform:translateX(-104%);
+    transition:transform .34s cubic-bezier(.4,.0,.2,1);
+    display:flex; flex-direction:column;
+  }
+  .panel.open { transform:translateX(0); }
+  .panel-head {
+    padding:22px 20px 14px; border-bottom:1px solid var(--line);
+    display:flex; align-items:flex-start; justify-content:space-between; gap:10px;
+  }
+  .panel-head h1 { font-family:'Playfair Display',serif; font-weight:700; font-size:25px; line-height:1.1; }
+  .panel-head p { font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); margin-top:5px; }
+  .close-x { background:none; border:none; color:var(--ink-soft); font-size:24px; cursor:pointer; line-height:1; padding:2px; }
+
+  .filters { padding:12px 16px; border-bottom:1px solid var(--line); display:flex; flex-wrap:wrap; gap:7px; }
+  .chip {
+    border:1px solid var(--line); background:transparent; color:var(--ink-soft);
+    border-radius:20px; padding:5px 11px; font-size:12px; font-weight:500; cursor:pointer;
+    display:inline-flex; align-items:center; gap:5px; transition:all .15s;
+  }
+  .chip .dot { width:9px; height:9px; border-radius:50%; }
+  .chip.on { color:#fff; border-color:transparent; }
+
+  .list { flex:1; overflow-y:auto; padding:6px 0 26px; }
+  .group-h {
+    font-family:'Playfair Display',serif; font-style:italic; font-weight:600; font-size:15px;
+    padding:14px 20px 6px; color:var(--ink-soft);
+    display:flex; align-items:center; gap:8px;
+  }
+  .group-h .gi { width:18px; height:18px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:11px; color:#fff; }
+  .item {
+    padding:9px 20px; cursor:pointer; display:flex; gap:11px; align-items:flex-start;
+    border-left:3px solid transparent; transition:background .12s;
+  }
+  .item:hover, .item:active { background:var(--panel-2); }
+  .item .pin { width:11px; height:11px; border-radius:50%; margin-top:4px; flex-shrink:0; box-shadow:0 0 0 3px rgba(0,0,0,.04); }
+  .item .meta { flex:1; min-width:0; }
+  .item .nm { font-size:14px; font-weight:500; display:flex; align-items:center; gap:6px; }
+  .item .ad { font-size:11.5px; color:var(--ink-soft); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .star { color:#d8a93c; font-size:12px; }
+
+  /* ---------- Popup ---------- */
+  .mapboxgl-popup { max-width:300px !important; }
+  .mapboxgl-popup-content {
+    background:var(--panel); color:var(--ink);
+    border-radius:16px; padding:0; overflow:hidden;
+    box-shadow:0 10px 40px rgba(0,0,0,.32);
+    font-family:'Inter',sans-serif;
+  }
+  .mapboxgl-popup-close-button { font-size:22px; color:var(--ink-soft); padding:4px 9px; }
+  .mapboxgl-popup-tip { display:none; }
+  .pop-band { height:6px; }
+  .pop-body { padding:14px 16px 16px; }
+  .pop-cat { font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); display:flex; align-items:center; gap:6px; }
+  .pop-cat .ci { width:16px; height:16px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; color:#fff; }
+  .pop-name { font-family:'Playfair Display',serif; font-weight:600; font-size:19px; line-height:1.15; margin:7px 0 3px; display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+  .pop-addr { font-size:12px; color:var(--ink-soft); margin-bottom:9px; }
+  .pop-note { font-size:13px; line-height:1.5; margin-bottom:13px; }
+  .pop-btns { display:flex; gap:8px; }
+  .pop-btns a {
+    flex:1; text-align:center; text-decoration:none; font-size:12.5px; font-weight:600;
+    padding:9px 6px; border-radius:10px; display:flex; align-items:center; justify-content:center; gap:5px;
+    border:1px solid var(--line); color:var(--ink); transition:background .15s;
+  }
+  .pop-btns a.primary { background:var(--accent); color:#fff; border-color:transparent; }
+  .pop-btns a:active { transform:scale(.97); }
+
+  /* ---------- Markers ---------- */
+  .mk { width:26px; height:26px; border-radius:50%;
+        border:2px solid rgba(255,255,255,.85); box-shadow:0 3px 8px rgba(0,0,0,.3);
+        display:flex; align-items:center; justify-content:center; cursor:pointer;
+        position:relative; will-change:transform; transition:scale .15s; }
+  .mk::after { content:''; position:absolute; top:calc(100% - 2px); left:50%;
+               transform:translateX(-50%); width:10px; height:10px;
+               background:inherit; clip-path:polygon(0 0,100% 0,50% 100%); }
+  .mk i { color:#fff; font-size:13px; }
+  .mk:hover { scale:1.14; }
+  .mk.home { width:40px; height:40px; border-width:3px; z-index:3; }
+  .mk.home i { font-size:19px; }
+  .mk.home::after { width:14px; height:12px; }
+  .mk.starred { box-shadow:0 0 0 3px #d8a93c, 0 3px 9px rgba(0,0,0,.35); }
+
+.legend-note { position:absolute; bottom:16px; left:50%; transform:translateX(-50%); z-index:4;
+    background:var(--panel); color:var(--ink-soft); font-size:11px; padding:7px 14px; border-radius:20px;
+    box-shadow:0 2px 10px rgba(0,0,0,.2); white-space:nowrap; opacity:.95; }
+
+  @media (max-width:520px){
+    .title-pill { font-size:15px; }
+    .legend-note { display:none; }
+  }
+  /* NavigationControl zoom buttons */
+  .mapboxgl-ctrl-group { background:var(--panel) !important; border:none !important; border-radius:12px !important; box-shadow:0 2px 10px rgba(0,0,0,.18) !important; overflow:hidden; }
+  .mapboxgl-ctrl-group button { width:44px !important; height:44px !important; }
+  .mapboxgl-ctrl-group button+button { border-top:1px solid var(--line) !important; }
+  body.night .mapboxgl-ctrl-icon { filter:invert(1) brightness(.85) !important; }
+
+  @media (prefers-reduced-motion: reduce){ *{ transition:none !important; } }
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<div class="topbar">
+  <button class="menu-btn" id="menuBtn" aria-label="Open places list"><i class="icon-menu"></i></button>
+  <div class="title-pill">San Antonio<small>July 2026</small></div>
+  <div class="spacer"></div>
+  <button class="toggle-btn" id="layersBtn" aria-label="Toggle map layers"><i class="icon-layers"></i></button>
+  <button class="toggle-btn" id="resetBtn" aria-label="Recenter map"><i class="icon-rotate-ccw"></i></button>
+  <button class="locate-btn" id="locateBtn" aria-label="Find my location"><i class="icon-locate-fixed"></i></button>
+  <button class="toggle-btn" id="themeBtn" aria-label="Toggle day or night"><i class="icon-sun"></i></button>
+</div>
+
+<div class="layers-panel" id="layersPanel">
+  <button class="layer-row" id="zoneToggle">
+    <i class="icon-map layer-ico"></i>
+    <span class="layer-label">Zones</span>
+    <span class="lr-pip"></span>
+  </button>
+
+</div>
+
+<aside class="panel" id="panel">
+  <div class="panel-head">
+    <div>
+      <h1>The Itinerary</h1>
+      <p id="count">Loading places…</p>
+    </div>
+    <button class="close-x" id="closeBtn" aria-label="Close">&times;</button>
+  </div>
+  <div class="filters" id="filters"></div>
+  <div class="list" id="list"></div>
+</aside>
+
+<div class="legend-note" id="legendNote">Tap a pin for details, hours &amp; directions</div>
+
+<script>
+const MAPBOX_TOKEN = 'pk.eyJ1IjoibmF0aGFubWlyYW5kYSIsImEiOiJjbXFyZ2RteGcwcXh5Mnlvam44ZTFtNWY4In0.T15pzkuzL4bAEAnIRI9TCQ';
+mapboxgl.accessToken = MAPBOX_TOKEN;
+
+
+let DATA = null, map = null, markers = [], activeCats = new Set(), userMarker = null;
+let zonesMode = false, zonePopup = null;
+let layersPanelOpen = false;
+
+const ICONS = {
+  home:'icon-home', landmark:'icon-landmark',
+  utensils:'icon-utensils', music:'icon-music', trophy:'icon-trophy',
+  train:'icon-train-front'
+};
+
+async function boot(){
+  DATA = await (await fetch('locations.json')).json();
+  Object.keys(DATA.categories).forEach(c=>activeCats.add(c));
+  initMap();
+  buildFilters();
+  buildList();
+}
+
+function initMap(){
+  map = new mapboxgl.Map({
+    container:'map',
+    style: styleFor(true),
+    center:[DATA.config.homebase.lng, DATA.config.homebase.lat],
+    zoom:12.2,
+    minZoom:11,
+    maxBounds:[[-98.62, 29.33], [-98.36, 29.55]],
+    attributionControl:false
+  });
+  map.addControl(new mapboxgl.AttributionControl({compact:true}));
+  map.addControl(new mapboxgl.NavigationControl({showCompass:false}), 'bottom-right');
+  map.on('load', ()=>{ paintTheme(true); addMarkers(); fitToRadius(); });
+}
+
+function styleFor(night){
+  return night
+    ? 'mapbox://styles/mapbox/dark-v11'
+    : 'mapbox://styles/mapbox/light-v11';
+}
+
+function paintTheme(night){
+  const layers = map.getStyle().layers;
+  const set = (id,prop,val)=>{ if(map.getLayer(id)){ try{ map.setPaintProperty(id,prop,val);}catch(e){} } };
+  if(!night){
+    map.setPaintProperty('background','background-color','#e9d4b8');
+    layers.forEach(l=>{
+      if(l.type==='fill' && /land|landuse|landcover/.test(l.id)) set(l.id,'fill-color','#e3cba9');
+      if(/water/.test(l.id) && l.type==='fill') set(l.id,'fill-color','#9cc2cc');
+      if(/road/.test(l.id) && l.type==='line') set(l.id,'line-color','#c9a071');
+      if(/park|green/.test(l.id) && l.type==='fill') set(l.id,'fill-color','#bfb27a');
+    });
+  } else {
+    map.setPaintProperty('background','background-color','#0d1b2a');
+    layers.forEach(l=>{
+      if(l.type==='fill' && /land|landuse|landcover/.test(l.id)) set(l.id,'fill-color','#13243a');
+      if(/water/.test(l.id) && l.type==='fill') set(l.id,'fill-color','#0f2c44');
+      if(/road/.test(l.id) && l.type==='line') set(l.id,'line-color','#c5763a');
+      if(/park|green/.test(l.id) && l.type==='fill') set(l.id,'fill-color','#163a2a');
+    });
+  }
+}
+
+function fitToRadius(){
+  const {lat,lng}=DATA.config.homebase, r=DATA.config.radiusMiles;
+  const dLat=r/69, dLng=r/(69*Math.cos(lat*Math.PI/180));
+  map.fitBounds([[lng-dLng,lat-dLat],[lng+dLng,lat+dLat]],{padding:40,duration:0});
+}
+
+function addMarkers(){
+  markers.forEach(m=>m.marker.remove()); markers=[];
+  DATA.locations.filter(l=>l.cat!=='zones').forEach(loc=>{
+    const cat=DATA.categories[loc.cat];
+    if(!cat) return;
+    const outer=document.createElement('div');
+    const inner=document.createElement('div');
+    inner.className='mk'+(loc.cat==='homebase'?' home':'')+(loc.star?' starred':'');
+    inner.style.background=cat.color;
+    inner.innerHTML=`<i class="${ICONS[cat.icon]}"></i>`;
+    outer.appendChild(inner);
+    const marker=new mapboxgl.Marker({element:outer,anchor:'bottom',offset:[0,loc.cat==='homebase'?-12:-10]})
+      .setLngLat([loc.lng,loc.lat])
+      .setPopup(makePopup(loc,cat))
+      .addTo(map);
+    inner.addEventListener('click',()=>{ map.flyTo({center:[loc.lng,loc.lat],zoom:14.5,speed:.8}); });
+    markers.push({marker,cat:loc.cat,el:outer});
+  });
+}
+
+function makePopup(loc,cat){
+  const q=encodeURIComponent(loc.name+' '+(loc.address||''));
+  const apple=`https://maps.apple.com/?q=${q}&ll=${loc.lat},${loc.lng}`;
+  const google=`https://www.google.com/maps/search/?api=1&query=${loc.lat},${loc.lng}`;
+  const starHtml=loc.star?'<span class="star"><i class="icon-star" style="font-size:13px"></i></span>':'';
+  const html=`
+    <div class="pop-band" style="background:${cat.color}"></div>
+    <div class="pop-body">
+      <div class="pop-cat"><span class="ci" style="background:${cat.color}"><i class="${ICONS[cat.icon]}"></i></span>${cat.label}</div>
+      <div class="pop-name">${loc.name}${starHtml}</div>
+      ${loc.address?`<div class="pop-addr">${loc.address}</div>`:''}
+      <div class="pop-note">${loc.note||''}</div>
+      <div class="pop-btns">
+        <a class="primary" href="${apple}" target="_blank" rel="noopener"><i class="icon-apple" style="font-size:13px"></i>Apple Maps</a>
+        <a href="${google}" target="_blank" rel="noopener"><i class="icon-navigation" style="font-size:13px"></i>Google Maps</a>
+      </div>
+    </div>`;
+  return new mapboxgl.Popup({offset:26,closeButton:true,maxWidth:'300px'}).setHTML(html);
+}
+
+function buildFilters(){
+  const wrap=document.getElementById('filters'); wrap.innerHTML='';
+  Object.entries(DATA.categories).forEach(([key,c])=>{
+    const b=document.createElement('button');
+    b.className='chip on'; b.dataset.cat=key;
+    b.style.background=c.color; b.style.borderColor='transparent';
+    b.innerHTML=`<span class="dot" style="background:#fff"></span>${c.label}`;
+    b.addEventListener('click',()=>toggleCat(key,b,c));
+    wrap.appendChild(b);
+  });
+}
+
+function toggleCat(key,btn,c){
+  if(activeCats.has(key)){
+    activeCats.delete(key); btn.classList.remove('on');
+    btn.style.background='transparent'; btn.style.borderColor='var(--line)';
+    btn.querySelector('.dot').style.background=c.color;
+  } else {
+    activeCats.add(key); btn.classList.add('on');
+    btn.style.background=c.color; btn.style.borderColor='transparent';
+    btn.querySelector('.dot').style.background='#fff';
+  }
+  markers.forEach(m=>{ m.el.style.display=activeCats.has(m.cat)?'':'none'; });
+  buildList();
+}
+
+function buildList(){
+  const list=document.getElementById('list'); list.innerHTML='';
+  let total=0;
+  Object.entries(DATA.categories).forEach(([key,c])=>{
+    if(!activeCats.has(key)) return;
+    const items=DATA.locations.filter(l=>l.cat===key);
+    if(!items.length) return;
+    const h=document.createElement('div'); h.className='group-h';
+    h.innerHTML=`<span class="gi" style="background:${c.color}"><i class="${ICONS[c.icon]}"></i></span>${c.label}`;
+    list.appendChild(h);
+    items.forEach(loc=>{
+      total++;
+      const it=document.createElement('div'); it.className='item'; it.style.borderLeftColor=c.color;
+      it.innerHTML=`<span class="pin" style="background:${c.color}"></span>
+        <div class="meta">
+          <div class="nm">${loc.name}${loc.star?'<span class="star"><i class="icon-star"></i></span>':''}</div>
+          <div class="ad">${loc.address||''}</div>
+        </div>`;
+      it.addEventListener('click',()=>{
+        closePanel();
+        map.flyTo({center:[loc.lng,loc.lat],zoom:14.5,speed:.9});
+        const m=markers.find(mm=>mm.marker.getLngLat().lng===loc.lng && mm.marker.getLngLat().lat===loc.lat);
+        setTimeout(()=>{ if(m) m.marker.togglePopup(); },650);
+      });
+      list.appendChild(it);
+    });
+  });
+  document.getElementById('count').textContent=`${total} places · ${DATA.config.radiusMiles}-mile radius`;
+}
+
+/* ---------- Live location ---------- */
+function locate(){
+  if(!navigator.geolocation){ alert('Location not supported on this browser.'); return; }
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const {latitude,longitude}=pos.coords;
+    if(longitude<-98.62||longitude>-98.36||latitude<29.33||latitude>29.55){
+      alert("You're outside the trip area — location not shown on map.");
+      return;
+    }
+    if(userMarker) userMarker.remove();
+    const el=document.createElement('div');
+    el.style.cssText='width:18px;height:18px;border-radius:50%;background:#2f7fdb;border:3px solid #fff;box-shadow:0 0 0 4px rgba(47,127,219,.3),0 2px 6px rgba(0,0,0,.4);';
+    userMarker=new mapboxgl.Marker({element:el}).setLngLat([longitude,latitude]).addTo(map);
+    map.flyTo({center:[longitude,latitude],zoom:14,speed:.9});
+  },()=>alert('Could not get your location. Check browser permissions.'),{enableHighAccuracy:true});
+}
+
+/* ---------- Zones layer (additive — PoI pins stay visible) ---------- */
+function makeCirclePolygon(lng,lat,radiusKm){
+  const steps=64, coords=[];
+  for(let i=0;i<=steps;i++){
+    const a=(i/steps)*2*Math.PI;
+    coords.push([
+      lng+(radiusKm/111.32/Math.cos(lat*Math.PI/180))*Math.sin(a),
+      lat+(radiusKm/110.574)*Math.cos(a)
+    ]);
+  }
+  return {type:'Polygon',coordinates:[coords]};
+}
+
+function addZoneLayers(){
+  if(map.getSource('zones-src')) return;
+  const zones=DATA.locations.filter(l=>l.cat==='zones');
+  const geojson={type:'FeatureCollection',features:zones.map(z=>({
+    type:'Feature',
+    properties:{name:z.name,note:z.note||'',address:z.address||'',lat:z.lat,lng:z.lng},
+    geometry:makeCirclePolygon(z.lng,z.lat,z.radius||0.5)
+  }))};
+  map.addSource('zones-src',{type:'geojson',data:geojson});
+  map.addLayer({id:'zones-fill',type:'fill',source:'zones-src',
+    paint:{'fill-color':'#7B9E9E','fill-opacity':0.15}});
+  map.addLayer({id:'zones-line',type:'line',source:'zones-src',
+    paint:{'line-color':'#7B9E9E','line-width':2,'line-opacity':0.6}});
+  map.on('click','zones-fill',onZoneClick);
+  map.on('mouseenter','zones-fill',()=>{map.getCanvas().style.cursor='pointer';});
+  map.on('mouseleave','zones-fill',()=>{map.getCanvas().style.cursor='';});
+}
+
+function removeZoneLayers(){
+  if(map.getLayer('zones-fill')) map.removeLayer('zones-fill');
+  if(map.getLayer('zones-line')) map.removeLayer('zones-line');
+  if(map.getSource('zones-src')) map.removeSource('zones-src');
+}
+
+function onZoneClick(e){
+  if(zonePopup) zonePopup.remove();
+  const {name,note,address,lat,lng}=e.features[0].properties;
+  const q=encodeURIComponent(name+' '+(address||''));
+  const apple=`https://maps.apple.com/?q=${q}&ll=${lat},${lng}`;
+  const google=`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+  zonePopup=new mapboxgl.Popup({closeButton:true,maxWidth:'300px'})
+    .setLngLat(e.lngLat)
+    .setHTML(`
+      <div class="pop-band" style="background:#7B9E9E"></div>
+      <div class="pop-body">
+        <div class="pop-cat"><span class="ci" style="background:#7B9E9E"><i class="icon-map"></i></span>Zone</div>
+        <div class="pop-name">${name}</div>
+        ${address?`<div class="pop-addr">${address}</div>`:''}
+        <div class="pop-note">${note}</div>
+        <div class="pop-btns">
+          <a class="primary" href="${apple}" target="_blank" rel="noopener"><i class="icon-apple" style="font-size:13px"></i>Apple Maps</a>
+          <a href="${google}" target="_blank" rel="noopener"><i class="icon-navigation" style="font-size:13px"></i>Google Maps</a>
+        </div>
+      </div>`)
+    .addTo(map);
+}
+
+function toggleZonesMode(){
+  zonesMode=!zonesMode;
+  document.getElementById('zoneToggle').classList.toggle('on',zonesMode);
+  if(zonesMode){
+    addZoneLayers();
+  } else {
+    if(zonePopup){zonePopup.remove();zonePopup=null;}
+    removeZoneLayers();
+  }
+}
+
+
+/* ---------- Layers panel ---------- */
+function toggleLayersPanel(){
+  layersPanelOpen=!layersPanelOpen;
+  document.getElementById('layersPanel').classList.toggle('open',layersPanelOpen);
+  document.getElementById('layersBtn').classList.toggle('on',layersPanelOpen);
+}
+
+/* ---------- Theme ---------- */
+let night=true;
+document.body.classList.add('night');
+
+function setTheme(n){
+  night=n; document.body.classList.toggle('night',n);
+  document.getElementById('themeBtn').innerHTML=`<i class="${n?'icon-sun':'icon-moon'}"></i>`;
+  map.setStyle(styleFor(n));
+  map.once('style.load',()=>{
+    paintTheme(n);
+    if(zonesMode) addZoneLayers();
+  });
+}
+
+/* ---------- Panel ---------- */
+function openPanel(){ document.getElementById('panel').classList.add('open'); }
+function closePanel(){ document.getElementById('panel').classList.remove('open'); }
+
+/* ---------- Event listeners ---------- */
+document.getElementById('menuBtn').addEventListener('click',openPanel);
+document.getElementById('closeBtn').addEventListener('click',closePanel);
+document.getElementById('themeBtn').addEventListener('click',()=>setTheme(!night));
+document.getElementById('layersBtn').addEventListener('click',toggleLayersPanel);
+document.getElementById('zoneToggle').addEventListener('click',toggleZonesMode);
+document.getElementById('resetBtn').addEventListener('click',()=>fitToRadius());
+document.getElementById('locateBtn').addEventListener('click',locate);
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closePanel(); });
+document.addEventListener('click',e=>{
+  if(layersPanelOpen && !e.target.closest('#layersPanel') && !e.target.closest('#layersBtn')){
+    layersPanelOpen=false;
+    document.getElementById('layersPanel').classList.remove('open');
+    document.getElementById('layersBtn').classList.remove('on');
+  }
+});
+
+boot();
+</script>
+</body>
+</html>
