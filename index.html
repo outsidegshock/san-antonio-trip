@@ -266,7 +266,7 @@
   <div class="title-pill">San Antonio<small>July 2026</small></div>
   <div class="spacer"></div>
   <button class="toggle-btn" id="layersBtn" aria-label="Toggle map layers"><i class="icon-layers"></i></button>
-  <button class="toggle-btn" id="resetBtn" aria-label="Recenter options"><i class="icon-rotate-ccw"></i></button>
+  <button class="toggle-btn" id="resetBtn" aria-label="Recenter map"><i class="icon-rotate-ccw"></i></button>
   <button class="locate-btn" id="locateBtn" aria-label="Toggle live location tracking"><i class="icon-locate-fixed"></i></button>
   <button class="toggle-btn" id="themeBtn" aria-label="Toggle day or night"><i class="icon-sun"></i></button>
 </div>
@@ -282,18 +282,6 @@
     <i class="icon-satellite layer-ico"></i>
     <span class="layer-label">Satellite</span>
     <span class="lr-pip"></span>
-  </button>
-</div>
-
-<div class="layers-panel" id="resetPanel">
-  <button class="layer-row" id="recenterMapBtn">
-    <i class="icon-rotate-ccw layer-ico"></i>
-    <span class="layer-label">Recenter Map</span>
-  </button>
-  <div class="lr-sep"></div>
-  <button class="layer-row" id="recenterMeBtn">
-    <i class="icon-locate-fixed layer-ico"></i>
-    <span class="layer-label">My Location</span>
   </button>
 </div>
 
@@ -327,7 +315,7 @@ mapboxgl.accessToken = MAPBOX_TOKEN;
 
 let DATA = null, map = null, markers = [], activeCats = new Set(), userMarker = null;
 let zonesMode = false, satelliteMode = false;
-let layersPanelOpen = false, resetPanelOpen = false;
+let layersPanelOpen = false;
 let searchQuery = '';
 
 function matchesSearch(loc){
@@ -601,7 +589,15 @@ function stopTracking(){
 }
 
 function locate(){
-  if(tracking) stopTracking(); else startTracking();
+  if(!tracking){ startTracking(); return; }
+  if(!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const {latitude,longitude,heading}=pos.coords;
+    if(!inTripBounds(longitude,latitude)) return;
+    updateUserMarker(longitude,latitude);
+    map.easeTo({center:[longitude,latitude],zoom:14,duration:500});
+    if(heading!=null && !isNaN(heading)) setUserHeading(heading);
+  },()=>{},{enableHighAccuracy:true});
 }
 
 /* ---------- Zones layer (additive — PoI pins stay visible) ---------- */
@@ -677,34 +673,6 @@ function toggleLayersPanel(){
   layersPanelOpen=!layersPanelOpen;
   document.getElementById('layersPanel').classList.toggle('open',layersPanelOpen);
   document.getElementById('layersBtn').classList.toggle('on',layersPanelOpen);
-  if(layersPanelOpen) closeResetPanel();
-}
-
-/* ---------- Reset panel ---------- */
-function toggleResetPanel(){
-  resetPanelOpen=!resetPanelOpen;
-  document.getElementById('resetPanel').classList.toggle('open',resetPanelOpen);
-  document.getElementById('resetBtn').classList.toggle('on',resetPanelOpen);
-  if(resetPanelOpen){
-    layersPanelOpen=false;
-    document.getElementById('layersPanel').classList.remove('open');
-    document.getElementById('layersBtn').classList.remove('on');
-  }
-}
-
-function closeResetPanel(){
-  resetPanelOpen=false;
-  document.getElementById('resetPanel').classList.remove('open');
-  document.getElementById('resetBtn').classList.remove('on');
-}
-
-function centerOnMe(){
-  if(!userMarker){
-    alert("Your location isn't available — turn on live location tracking first.");
-    return;
-  }
-  const {lng,lat}=userMarker.getLngLat();
-  map.easeTo({center:[lng,lat],zoom:14,duration:500});
 }
 
 /* ---------- Theme ---------- */
@@ -743,9 +711,7 @@ document.getElementById('themeBtn').addEventListener('click',()=>setTheme(!night
 document.getElementById('layersBtn').addEventListener('click',toggleLayersPanel);
 document.getElementById('zoneToggle').addEventListener('click',toggleZonesMode);
 document.getElementById('satelliteToggle').addEventListener('click',toggleSatellite);
-document.getElementById('resetBtn').addEventListener('click',toggleResetPanel);
-document.getElementById('recenterMapBtn').addEventListener('click',()=>{ fitToRadius(); closeResetPanel(); });
-document.getElementById('recenterMeBtn').addEventListener('click',()=>{ centerOnMe(); closeResetPanel(); });
+document.getElementById('resetBtn').addEventListener('click',()=>fitToRadius());
 document.getElementById('locateBtn').addEventListener('click',locate);
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closePanel(); });
 document.addEventListener('click',e=>{
@@ -753,9 +719,6 @@ document.addEventListener('click',e=>{
     layersPanelOpen=false;
     document.getElementById('layersPanel').classList.remove('open');
     document.getElementById('layersBtn').classList.remove('on');
-  }
-  if(resetPanelOpen && !e.target.closest('#resetPanel') && !e.target.closest('#resetBtn')){
-    closeResetPanel();
   }
 });
 
